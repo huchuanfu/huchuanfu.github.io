@@ -1,4 +1,5 @@
-1. 大模型推理的原理
+- [首页](../README.md "Java Interview Docs")
+1. 
     - Tokenization（分词）：通过字节对编码（BPE）分词方法将文本文本分解成token，每个词元都对应一个模型可以使用的整数 ID：token ID
     - Embedding向量化：每个 token ID 到 embedding_matrix 查找对应向量，把单词转换成它在高维空间中的语义位置
     - 加入Positional Encoding：让模型理解句子结构
