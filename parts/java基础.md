@@ -323,10 +323,11 @@
 59. 如何快速实现LRU
     - LinkedHashMap设置accessOrder = true → 按访问顺序维护链表
     - 继承 LinkedHashMap，重写 removeEldestEntry 方法，控制容量
-60. 强引用（StrongReference）垃圾回收器绝不会回收它
-    软引用（SoftReference）如果内存空间不足了，就会回收这些对象的内存
-    弱引用（WeakReference）不管当前内存空间足够与否，都会回收它的内存
-    虚引用（PhantomReference）如果一个对象仅持有虚引用，那么它就和没有任何引用一样，在任何时候都可能被垃圾回收。虚引用主要用来跟踪对象被垃圾回收的活动。
+60. Java中4种引用类型的区别
+    - 强引用（StrongReference）垃圾回收器绝不会回收它
+    - 软引用（SoftReference）如果内存空间不足了，就会回收这些对象的内存
+    - 弱引用（WeakReference）不管当前内存空间足够与否，都会回收它的内存
+    - 虚引用（PhantomReference）如果一个对象仅持有虚引用，那么它就和没有任何引用一样，在任何时候都可能被垃圾回收。虚引用主要用来跟踪对象被垃圾回收的活动。
 61. 单例模式经典实现 
     - 饿汉式：利用类加载机制保证线程安全
         ```java
@@ -411,16 +412,16 @@
     - Selector（选择器）：允许一个线程处理多个 Channel，基于事件驱动的 I/O 多路复用模型。所有的 Channel 都可以注册到 Selector 上，由 Selector 来分配线程来处理事件。
 64. Java IO有哪些类
     - 基础 I/O 类
-    - 字节流类（InputStream，FileInputStream，ByteArrayInputStream）适合处理非文本数据以及任何需要精确控制字节流动的场景
-    - 字符流类（Reader，FileReader，CharArrayReader，BufferedReader）适合处理文本数据，如读取和写入文本文件、处理 XML、JSON 等文本格式数据
+      - 字节流类（InputStream，FileInputStream，ByteArrayInputStream）适合处理非文本数据以及任何需要精确控制字节流动的场景
+      - 字符流类（Reader，FileReader，CharArrayReader，BufferedReader）适合处理文本数据，如读取和写入文本文件、处理 XML、JSON 等文本格式数据
     - NIO（New I/O）类
-    - 缓冲区类（ByteBuffer，CharBuffer） 通道类（FileChannel，SocketChannel） 选择器类（Selector）
+      - 缓冲区类（ByteBuffer，CharBuffer） 通道类（FileChannel，SocketChannel） 选择器类（Selector）
 65. Java中如何访问对象的内存位置
     - 句柄（Handle）
-    - 当创建一个对象时，JVM为这个对象分配内存，并为其分配一个句柄。对象引用实际上是指向这个句柄的地址。
+      - 当创建一个对象时，JVM为这个对象分配内存，并为其分配一个句柄。对象引用实际上是指向这个句柄的地址。
+      - 句柄JVM在进行垃圾回收时可以更方便地移动对象（例如，在内存中重新分配对象位置）而不会影响对象引用。
+      - 每次访问对象多一次内存间接寻址，每次访问对象 多一次内存间接寻址
     - 直接指针（Direct Pointer）
-    - 对象创建时，JVM分配内存，并将对象的内存地址直接作为引用返回给应用程序
-    - 句柄JVM在进行垃圾回收时可以更方便地移动对象（例如，在内存中重新分配对象位置）而不会影响对象引用。
-    - 指针在垃圾回收过程中，如果对象被移动，那么直接指针需要被更新，这会增加实现的复杂性。
-
-
+      - 对象创建时，JVM分配内存，并将对象的内存地址直接作为引用返回给应用程序
+      - 指针在垃圾回收过程中，如果对象被移动，那么直接指针需要被更新，这会增加实现的复杂性。
+    - HotSpot JVM 采用的是「直接指针（Direct Pointer）」方案

@@ -116,3 +116,37 @@
       - **代表**：Kafka, RocketMQ
       - **原理**：由 Consumer 主动向 Broker 发起请求，拉取消息。消费的主动权在消费者手中，可以根据自己的处理能力来决定一次拉取多少消息。
       - **缺点**：如果 Broker 没有消息，消费者的拉取请求可能是无效的，造成资源浪费。为了解决这个问题，通常会采用“长轮询（Long Polling）”机制：消费者发起拉取请求后，如果当前没有消息，Broker 会将请求挂起一段时间，直到有新消息到达或超时，从而降低了无效轮询的频率，兼顾了实时性和效率。
+21. Azure Service Bus
+    - **核心定位**：Azure 提供的完全托管的企业级消息中间件（PaaS）。支持 AMQP 1.0、HTTP/REST 协议，Premium（高级层）支持 Java JMS 2.0 标准。适用于高价值业务消息（如订单、支付）。
+    - **核心模型**：
+      - **Queues (队列)**：点对点模型 (Point-to-Point)。提供负载均衡，消费者竞争消费。
+      - **Topics & Subscriptions (主题与订阅)**：发布/订阅模型 (Pub/Sub)。Topic 接收消息，Subscription 像虚拟队列一样接收副本。
+      - **Filters (过滤器)**：Subscription 可以定义规则（支持 SQL 语法），只接收符合条件的消息。这比 RabbitMQ 的 Routing Key 更强大和灵活。
+    - **如何保证顺序 (Message Sessions)**：
+      - 普通队列在多消费者并发下无法严格保证全局 FIFO。
+      - **Message Sessions (会话)**：通过指定 `SessionId`，Service Bus 确保具有相同 SessionId 的消息被“锁定”给同一个消费者实例，并按顺序处理。这是 Azure Service Bus 实现有序消费的核心机制。
+    - **消息确认机制 (Peek-Lock vs Receive-and-Delete)**：
+      - **Peek-Lock (默认/推荐)**：消费者读取消息后，消息在服务端被“锁定”变为不可见，但未删除。消费者处理成功后调用 `Complete()`；如果处理失败或超时，锁自动释放，消息重新可见（At-Least-Once 语义）。
+      - **Receive-and-Delete**：消息发送给消费者后立即从队列删除。如果消费者崩溃，消息丢失（At-Most-Once 语义）。
+    - **死信队列 (DLQ)**：
+      - 每个 Queue 和 Subscription 默认都有一个 DLQ。
+      - **进入 DLQ 的原因**：超过最大投递次数 (MaxDeliveryCount)、TTL 过期（需配置）、过滤器评估异常等。
+    - **延迟消息**：
+      - 原生支持。发送消息时设置 `ScheduledEnqueueTimeUtc`，消息会暂存在服务端，直到指定时间才对消费者可见。
+    - **与 Azure Event Hubs (类 Kafka) 的区别**：
+      - **Service Bus**：侧重于“消息 (Message)”。处理高价值、事务性、复杂路由的业务逻辑。
+      - **Event Hubs**：侧重于“事件流 (Event Stream)”。类似于 Kafka，侧重高吞吐量、大数据摄入、分区日志架构。
+22. Azure Service Bus相比RabbitMQ的优势
+    - **总结**：Azure Service Bus 作为云原生 PaaS 服务，提供了许多开箱即用的企业级功能，而 RabbitMQ 作为一个开源自托管的 Broker，虽然灵活但需要更多的手动配置、插件和运维投入来实现类似的功能。
+    - **Duplicate Detection (内置重复数据删除)**：
+      - **Service Bus**: 提供开箱即用的服务器端重复数据删除功能。你可以在创建队列或主题时启用此功能，并设置一个时间窗口（如 10 分钟）。Service Bus 会在此期间记录所有消息的 `MessageId`，并自动丢弃任何重复的消息。这极大地简化了客户端的幂等性实现。
+      - **RabbitMQ**: 核心功能不提供服务器端重复数据删除。幂等性保证完全是消费者的责任，通常需要借助外部存储（如 Redis）来跟踪已处理的消息 ID。虽然 `Stream` 插件提供了类似功能，但这并非其标准队列的特性。
+    - **Scheduled Messages (计划消息)**：
+      - **Service Bus**: 原生支持按消息设置精确的延迟投递时间。发送时只需设置 `ScheduledEnqueueTimeUtc` 属性，消息就会在服务端暂存，直到指定时间才对消费者可见。此功能精确、简单且对性能影响小。
+      - **RabbitMQ**: 没有原生支持。主要通过 `rabbitmq-delayed-message-exchange` 插件实现，但该插件存在性能瓶颈和数据丢失的风险（节点故障时，未持久化的延迟消息会丢失），不推荐用于高并发或高可靠性场景。另一个方案是 TTL+DLX，但它无法实现精确的、任意时间的延迟，且存在队头阻塞问题。
+    - **Transactions (事务)**：
+      - **Service Bus**: 支持跨多个实体（队列/主题）的原子操作。一个强大的功能是，消费者可以在一个事务内接收一条消息，并发送多条消息到其他队列/主题，整个操作要么全部成功，要么全部失败。这为实现可靠的“处理-转发”模式提供了坚实基础。
+      - **RabbitMQ**: 提供了 `txSelect`, `txCommit`, `txRollback` 事务机制，但它性能开销巨大，且仅限于生产者与 Broker 之间的交互，无法覆盖“接收并发送”的原子场景，因此在实践中很少被使用。更常见的是使用轻量级的 `Publisher Confirms` 机制来确保发送成功。
+    - **Geo-Replication (异地复制)**：
+      - **Service Bus**: 在高级版（Premium Tier）中提供开箱即用的异地灾备功能。你可以配对两个不同地理区域的命名空间，服务会自动同步元数据。在主区域发生灾难时，可以手动或自动故障转移到辅助区域，实现业务连续性，而这一切都由 Azure 平台管理。
+      - **RabbitMQ**: 作为自托管服务，实现异地复制非常复杂。通常需要结合 `Federation` 或 `Shovel` 插件在不同数据中心的集群间同步消息。这需要自己管理网络、安全、数据一致性和故障转移逻辑，运维成本和复杂度远高于 Service Bus 的托管方案。
