@@ -312,7 +312,7 @@
         └── WeakHashMap（弱引用 key）
     ```
 55. JDK11、17、21版本特性
-    - JDK11：新的 HTTP Client（标准 API）、ZGC（实验性）首次加入
+    - JDK11：新的 HTTP/2 Client（标准 API）、ZGC（实验性）首次加入
     - JDK17：record、ZGC 从实验 → 稳定
     - JDK21：虚拟线程（Virtual Threads）、ZGC 大幅增强
 56. 每个 Java 类都有一个引用指向加载它的 ClassLoader。不过,数组类不是通过 ClassLoader 创建的,
