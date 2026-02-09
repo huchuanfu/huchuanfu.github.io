@@ -24,6 +24,7 @@
 6. Kafka：
    - Topic（主题） : Producer 将消息发送到特定的主题，Consumer 通过订阅特定的 Topic(主题) 来消费消息。
    - Partition（分区） : Partition 属于 Topic 的一部分。一个 Topic 可以有多个 Partition ，并且同一 Topic 下的 Partition 可以分布在不同的 Broker 上，这也就表明一个 Topic 可以横跨多个 Broker。
+   - One partition can only be consumed by ONE consumer within a group
 7. 如何保证 RabbitMQ 高可用的
     - 镜像集群模式（已废弃）：早期的 RabbitMQ 高可用方案。每个节点都有 queue 的完整镜像。但由于性能损耗大且网络分区处理能力弱，RabbitMQ 3.8+ 以后官方已废弃该模式，推荐使用仲裁队列（Quorum Queues）。
     - 仲裁队列（Quorum Queues）：基于 Raft 协议的新一代高可用队列，数据安全性更高，网络开销更小。
