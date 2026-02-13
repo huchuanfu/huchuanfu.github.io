@@ -8,3 +8,4 @@
 * [消息MQ](parts/消息MQ.md)
 * [分布式集群](parts/分布式集群.md)
 * [AI基础](parts/AI基础.md)
+* [英语基础](parts/英语基础.md)
